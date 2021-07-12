@@ -55,6 +55,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("caxa stub: Unable to remove path '%v': %v", footer.Identifier, err)
 		}
+	} else {
+		fmt.Fprintf(os.Stderr, "[debug] caxa stub: identfier is NOT absolute: '%v'\n", footer.Identifier)
 	}
 	for extractionAttempt := 0; true; extractionAttempt++ {
 		lock := path.Join(os.TempDir(), "caxa/locks", footer.Identifier, strconv.Itoa(extractionAttempt))

@@ -31,6 +31,7 @@ export default async function caxa({
   prepareCommand,
   prepare = async (buildDirectory: string) => {
     if (prepareCommand === undefined) return;
+    console.error(`Running "${prepareCommand}" on "${buildDirectory}"...`);
     await execa.command(prepareCommand, { cwd: buildDirectory, shell: true });
   },
   includeNode = true,
@@ -74,6 +75,7 @@ export default async function caxa({
     "caxa/builds",
     cryptoRandomString({ length: 10, type: "alphanumeric" }).toLowerCase()
   );
+  console.error(`Copying "${input}" to "${buildDirectory}"...`);
   await fs.copy(input, buildDirectory, { filter });
   if (dedupe)
     await execa("npm", ["dedupe", "--production"], { cwd: buildDirectory });
@@ -85,6 +87,7 @@ export default async function caxa({
       path.basename(process.execPath)
     );
     await fs.ensureDir(path.dirname(node));
+    console.error(`Copying Node.js from "${process.execPath}" to "${node}"...`);
     await fs.copyFile(process.execPath, node);
   }
 
@@ -179,15 +182,20 @@ export default async function caxa({
     await fs.copyFile(stub, output);
     await fs.chmod(output, 0o755);
     await appendTarballOfBuildDirectoryToOutput();
+    console.error(`Appending caxa footer...`);
+    console.error(JSON.stringify({ identifier, command }, null, 4));
     await fs.appendFile(
       output,
       "\n" + JSON.stringify({ identifier, command, uncompressionMessage })
     );
+    console.error(`Executable "${output}" created successfully`);
   }
 
+  removeBuildDirectory && console.error(`Removing "${buildDirectory}"...`);
   if (removeBuildDirectory) await fs.remove(buildDirectory);
 
   async function appendTarballOfBuildDirectoryToOutput(): Promise<void> {
+    console.error(`Creating tar archive...`);
     const archive = archiver("tar", { gzip: true });
     const archiveStream = fs.createWriteStream(output, { flags: "a" });
     archive.pipe(archiveStream);
