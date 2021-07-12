@@ -47,9 +47,22 @@ func main() {
 	}
 
 	var applicationDirectory string
+	isAbsIdentifier := filepath.IsAbs(footer.Identifier)
+	if isAbsIdentifier {
+		fmt.Fprintf(os.Stderr, "[debug] caxa stub: Removing previous installation at '%v'\n", footer.Identifier)
+		// OK if footer.Identifier does not exist: err will be nil
+		err := os.RemoveAll(footer.Identifier)
+		if err != nil {
+			log.Fatalf("caxa stub: Unable to remove path '%v': %v", footer.Identifier, err)
+		}
+	}
 	for extractionAttempt := 0; true; extractionAttempt++ {
 		lock := path.Join(os.TempDir(), "caxa/locks", footer.Identifier, strconv.Itoa(extractionAttempt))
-		applicationDirectory = path.Join(os.TempDir(), "caxa/applications", footer.Identifier, strconv.Itoa(extractionAttempt))
+		if isAbsIdentifier {
+			applicationDirectory = footer.Identifier
+		} else {
+			applicationDirectory = path.Join(os.TempDir(), "caxa/applications", footer.Identifier, strconv.Itoa(extractionAttempt))
+		}
 		applicationDirectoryFileInfo, err := os.Stat(applicationDirectory)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Fatalf("caxa stub: Failed to find information about the application directory: %v", err)
@@ -164,6 +177,7 @@ func main() {
 
 // Untar reads the gzip-compressed tar file from r and writes it into dir.
 func Untar(r io.Reader, dir string) error {
+	fmt.Fprintf(os.Stderr, "[debug] caxa stub: Extracting archive to \"%v\"\n", dir)
 	return untar(r, dir)
 }
 
